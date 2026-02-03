@@ -195,23 +195,23 @@ The container can run an HTTP server with two modes:
 2. S3-based processing (recommended for EC2-to-EC2)
 
 Run server:
-% docker run --rm -p 8000:8000 rnnoise:local \
+% docker run --rm -p 8005:8005 rnnoise:local \
   -e RNNOISE_MODE=server \
   -e AWS_REGION=us-east-1 \
   -e AWS_ACCESS_KEY_ID=your_key \
   -e AWS_SECRET_ACCESS_KEY=your_secret
 
 Health check:
-% curl http://localhost:8000/health
+% curl http://localhost:8005/health
 
 Direct binary mode (for small files or same-host):
-% curl -X POST http://localhost:8000/denoise \
+% curl -X POST http://localhost:8005/denoise \
   -H "Content-Type: application/octet-stream" \
   --data-binary @noisy.pcm \
   --output denoised.pcm
 
 S3 mode (recommended for multi-EC2):
-% curl -X POST http://localhost:8000/denoise/s3 \
+% curl -X POST http://localhost:8005/denoise/s3 \
   -H "Content-Type: application/json" \
   -d '{
     "input_s3_uri": "s3://your-bucket/noisy.pcm",
@@ -219,7 +219,7 @@ S3 mode (recommended for multi-EC2):
   }'
 
 With custom model from S3:
-% curl -X POST http://localhost:8000/denoise/s3 \
+% curl -X POST http://localhost:8005/denoise/s3 \
   -H "Content-Type: application/json" \
   -d '{
     "input_s3_uri": "s3://your-bucket/noisy.pcm",
@@ -228,7 +228,7 @@ With custom model from S3:
   }'
 
 Set concurrency and model path:
-% docker run --rm -p 8000:8000 \
+% docker run --rm -p 8005:8005 \
   -e RNNOISE_MODE=server \
   -e MAX_CONCURRENCY=8 \
   -e RNNOISE_MODEL=/opt/rnnoise/models/weights_blob.bin \

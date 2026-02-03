@@ -1,0 +1,59 @@
+# Build artifacts
+build/
+*.o
+*.lo
+*.la
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+
+# Autotools
+autom4te.cache/
+config.h
+config.h.in
+config.log
+config.status
+configure
+aclocal.m4
+Makefile
+Makefile.in
+.deps/
+.libs/
+*.pc
+stamp-h1
+libtool
+
+# Model files (downloaded)
+rnnoise_data-*.tar.gz
+weights_blob.bin
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.tmp
+*.bak
+*.orig

@@ -27,7 +27,7 @@ RUN set -e; \
     case "$f" in */src/*) ;; *) mv "$f" src/ ;; esac; \
   done
 
-RUN cmake -S . -B build \
+RUN rm -rf build && cmake -S . -B build \
   -DRNNOISE_ENABLE_X86_RTCD=ON \
   -DRNNOISE_BUILD_SHARED=ON \
   -DRNNOISE_BUILD_STATIC=OFF \

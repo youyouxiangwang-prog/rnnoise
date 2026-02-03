@@ -190,25 +190,52 @@ Override command and add model file:
 
 == HTTP API ==
 
-The container can run an HTTP server. It accepts raw 48 kHz mono PCM
-data and returns denoised PCM data.
+The container can run an HTTP server with two modes:
+1. Direct binary upload/download (legacy)
+2. S3-based processing (recommended for EC2-to-EC2)
 
 Run server:
 % docker run --rm -p 8000:8000 rnnoise:local \
-	-e RNNOISE_MODE=server
+  -e RNNOISE_MODE=server \
+  -e AWS_REGION=us-east-1 \
+  -e AWS_ACCESS_KEY_ID=your_key \
+  -e AWS_SECRET_ACCESS_KEY=your_secret
 
 Health check:
 % curl http://localhost:8000/health
 
-Denoise (binary body):
+Direct binary mode (for small files or same-host):
 % curl -X POST http://localhost:8000/denoise \
-	-H "Content-Type: application/octet-stream" \
-	--data-binary @noisy.pcm \
-	--output denoised.pcm
+  -H "Content-Type: application/octet-stream" \
+  --data-binary @noisy.pcm \
+  --output denoised.pcm
+
+S3 mode (recommended for multi-EC2):
+% curl -X POST http://localhost:8000/denoise/s3 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input_s3_uri": "s3://your-bucket/noisy.pcm",
+    "output_s3_uri": "s3://your-bucket/denoised.pcm"
+  }'
+
+With custom model from S3:
+% curl -X POST http://localhost:8000/denoise/s3 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input_s3_uri": "s3://your-bucket/noisy.pcm",
+    "output_s3_uri": "s3://your-bucket/denoised.pcm",
+    "model_s3_uri": "s3://your-bucket/custom_model.bin"
+  }'
 
 Set concurrency and model path:
 % docker run --rm -p 8000:8000 \
-	-e RNNOISE_MODE=server \
-	-e MAX_CONCURRENCY=8 \
-	-e RNNOISE_MODEL=/opt/rnnoise/models/weights_blob.bin \
-	rnnoise:local
+  -e RNNOISE_MODE=server \
+  -e MAX_CONCURRENCY=8 \
+  -e RNNOISE_MODEL=/opt/rnnoise/models/weights_blob.bin \
+  -e AWS_REGION=us-east-1 \
+  rnnoise:local
+
+IAM Permissions Required:
+- s3:GetObject on input bucket/key
+- s3:PutObject on output bucket/key
+- s3:GetObject on model bucket/key (if using custom model)

@@ -12,7 +12,7 @@ from pydantic import BaseModel
 APP = FastAPI(title="rnnoise-http")
 
 MAX_CONCURRENCY = int(os.getenv("MAX_CONCURRENCY", "4"))
-RNNOISE_BIN = os.getenv("RNNOISE_BIN", "rnnoise_wrapper_demo")
+RNNOISE_BIN = os.getenv("RNNOISE_BIN", "/opt/rnnoise/bin/rnnoise_wrapper_demo")
 DEFAULT_MODEL = os.getenv("RNNOISE_MODEL", "/opt/rnnoise/models/weights_blob.bin")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 

@@ -5,7 +5,7 @@ mode=${RNNOISE_MODE:-wrapper}
 
 case "$mode" in
   server)
-    exec uvicorn server.app:APP --host 0.0.0.0 --port 8000
+    exec uvicorn server.app:APP --host 0.0.0.0 --port 8005
     ;;
   demo|wrapper)
     if [ "$#" -lt 2 ]; then

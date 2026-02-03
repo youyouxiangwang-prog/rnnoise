@@ -56,13 +56,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV RNNOISE_HOME=/opt/rnnoise
 ENV PATH=/opt/rnnoise/bin:$PATH
-ENV PYTHONPATH=/usr/local/lib/python3.11/site-packages
 
-WORKDIR /data
+WORKDIR /app
 COPY --from=builder /opt/rnnoise /opt/rnnoise
 COPY --from=builder /usr/local/lib/python3.11 /usr/local/lib/python3.11
 COPY --from=builder /usr/local/bin/uvicorn /usr/local/bin/uvicorn
-COPY server /server
+COPY server /app/server
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

@@ -56,6 +56,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV RNNOISE_HOME=/opt/rnnoise
 ENV PATH=/opt/rnnoise/bin:$PATH
+ENV LD_LIBRARY_PATH=/opt/rnnoise/lib:$LD_LIBRARY_PATH
 
 WORKDIR /app
 COPY --from=builder /opt/rnnoise /opt/rnnoise

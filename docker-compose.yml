@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  rnnoise:
+    build:
+      context: .
+      args:
+        MODEL_URL_BASE: ${MODEL_URL_BASE:-}
+    image: rnnoise:local
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/data
+    working_dir: /data
+    environment:
+      RNNOISE_MODE: ${RNNOISE_MODE:-server}
+      MAX_CONCURRENCY: ${MAX_CONCURRENCY:-4}
+      RNNOISE_MODEL: ${RNNOISE_MODEL:-/opt/rnnoise/models/weights_blob.bin}

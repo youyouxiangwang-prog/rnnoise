@@ -16,11 +16,40 @@ To compile, just type:
 Optionally:
 % make install
 
+== Production build (CMake) ==
+
+For modern CI/CD and embedding RNNoise as a library, a CMake build is
+provided in the repository root. This is the recommended production path.
+
+Typical build (shared + static):
+% cmake -S . -B build \
+	-DRNNOISE_BUILD_SHARED=ON \
+	-DRNNOISE_BUILD_STATIC=ON
+% cmake --build build -j
+
+External model loading (recommended for production hot swap):
+% cmake -S . -B build \
+	-DRNNOISE_USE_WEIGHTS_FILE=ON
+
+Enable x86 runtime CPU detection (AVX2/SSE4.1):
+% cmake -S . -B build \
+	-DRNNOISE_ENABLE_X86_RTCD=ON
+
+Model files required for build:
+The build expects src/rnnoise_data.h (always) and src/rnnoise_data.c (unless
+RNNOISE_USE_WEIGHTS_FILE=ON). These files are generated when you export a
+trained model using dump_rnnoise_weights.py and then copy the output into src/.
+
 It is recommended to either set -march= in the CFLAGS to an architecture
 with AVX2 support or to add --enable-x86-rtcd to the configure script
 so that AVX2 (or SSE4.1) can at least be used as an option.
 Note that the autogen.sh script will automatically download the model files
 from the Xiph.Org servers, since those are too large to put in Git.
+
+If your production build must not depend on public downloads, place the
+model files in your own artifact store and point your build or CI to that
+location. You can also store the model in Git LFS and load it at runtime
+using rnnoise_model_from_file().
 
 While it is meant to be used as a library, a simple command-line tool is
 provided as an example. It operates on RAW 16-bit (machine endian) mono
@@ -123,3 +152,63 @@ model, rename rnnoise_data_little.c to rnnoise_data.c. It is possible
 to build both the regular and little binary weights and load any of them
 at run time since the little model has the same size as the regular one
 (except for the increased sparsity).
+
+The CMake option RNNOISE_USE_WEIGHTS_FILE provides the same behavior
+as -DUSE_WEIGHTS_FILE.
+
+The wrapper example built by CMake (rnnoise_wrapper_demo) demonstrates
+chunked input with a ring buffer and per-instance state creation.
+
+== Docker ==
+
+The Docker image builds RNNoise and packages demo binaries plus a
+weights_blob.bin model file for external loading.
+
+Build:
+% docker build -t rnnoise:local .
+
+Use an internal model mirror (optional):
+% docker build -t rnnoise:local . \
+	--build-arg MODEL_URL_BASE=https://your-internal-mirror.example.com/rnnoise/models
+
+Run (wrapper demo by default):
+% docker run --rm -v $PWD:/data rnnoise:local noisy.pcm denoised.pcm
+
+Run with explicit model file:
+% docker run --rm -v $PWD:/data rnnoise:local noisy.pcm denoised.pcm weights_blob.bin
+
+Use the original demo binary instead of the wrapper:
+% docker run --rm -e RNNOISE_MODE=demo -v $PWD:/data rnnoise:local noisy.pcm denoised.pcm
+
+Docker Compose:
+% MODEL_URL_BASE=https://your-internal-mirror.example.com/rnnoise/models \
+	RNNOISE_MODE=server \
+	docker compose up --build
+
+Override command and add model file:
+% docker compose run --rm rnnoise noisy.pcm denoised.pcm weights_blob.bin
+
+== HTTP API ==
+
+The container can run an HTTP server. It accepts raw 48 kHz mono PCM
+data and returns denoised PCM data.
+
+Run server:
+% docker run --rm -p 8000:8000 rnnoise:local \
+	-e RNNOISE_MODE=server
+
+Health check:
+% curl http://localhost:8000/health
+
+Denoise (binary body):
+% curl -X POST http://localhost:8000/denoise \
+	-H "Content-Type: application/octet-stream" \
+	--data-binary @noisy.pcm \
+	--output denoised.pcm
+
+Set concurrency and model path:
+% docker run --rm -p 8000:8000 \
+	-e RNNOISE_MODE=server \
+	-e MAX_CONCURRENCY=8 \
+	-e RNNOISE_MODEL=/opt/rnnoise/models/weights_blob.bin \
+	rnnoise:local

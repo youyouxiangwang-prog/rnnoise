@@ -56,30 +56,36 @@ def _convert_output(input_path: str, output_path: str, output_format: str) -> No
                 dst.write(src.read())
         return
     
-    # Map format names to ffmpeg codecs
-    codec_map = {
-        "wav": "pcm_s16le",
-        "mp3": "libmp3lame",
-        "flac": "flac",
-        "ogg": "libvorbis",
-        "aac": "aac",
-        "m4a": "aac",
+    # Map format names to ffmpeg codecs and extensions
+    format_map = {
+        "wav": {"codec": "pcm_s16le", "ext": "wav"},
+        "mp3": {"codec": "libmp3lame", "ext": "mp3"},
+        "flac": {"codec": "flac", "ext": "flac"},
+        "ogg": {"codec": "libvorbis", "ext": "ogg"},
+        "aac": {"codec": "aac", "ext": "aac"},
+        "m4a": {"codec": "aac", "ext": "m4a"},
     }
     
-    codec = codec_map.get(output_format.lower(), "pcm_s16le")
+    fmt = format_map.get(output_format.lower(), format_map["wav"])
+    output_with_ext = f"{output_path}.{fmt['ext']}"
+    
     args = [
         FFMPEG_BIN,
         "-f", "s16le",
         "-ar", "48000",
         "-ac", "1",
         "-i", input_path,
-        "-acodec", codec,
+        "-acodec", fmt["codec"],
         "-y",
-        output_path
+        output_with_ext
     ]
     result = subprocess.run(args, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"ffmpeg output conversion failed: {result.stderr}")
+    
+    # Move the file to the expected output path
+    import shutil
+    shutil.move(output_with_ext, output_path)
 
 
 def _parse_s3_uri(s3_uri: str) -> tuple:
@@ -156,7 +162,8 @@ async def denoise_direct(request: Request) -> Response:
         try:
             loop = asyncio.get_running_loop()
             with tempfile.TemporaryDirectory() as temp_dir:
-                input_path = os.path.join(temp_dir, "input.pcm")
+                # Save with generic extension - ffmpeg will probe the actual format
+                input_path = os.path.join(temp_dir, "input.audio")
                 output_path = os.path.join(temp_dir, "output")
                 with open(input_path, "wb") as input_file:
                     input_file.write(body)
